@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
-/* ─── Scroll-reveal hook ──────────────────────────────────────── */
+/* ─── Scroll-reveal hook ─────────────────────────────────────────── */
 function useReveal() {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -14,23 +14,21 @@ function useReveal() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
+            entry.target.classList.add("is-visible");
           }
         });
       },
-      { threshold: 0.12, rootMargin: "0px 0px -48px 0px" }
+      { threshold: 0.08 }
     );
 
-    const targets = el.querySelectorAll(".reveal, .reveal-scale, .reveal-left, .reveal-right");
-    targets.forEach((t) => observer.observe(t));
-
+    el.querySelectorAll(".reveal").forEach((t) => observer.observe(t));
     return () => observer.disconnect();
   }, []);
 
   return ref;
 }
 
-/* ─── Data ────────────────────────────────────────────────────── */
+/* ─── Data ─────────────────────────────────────────────────────── */
 const menuItems = [
   {
     id: 1,
@@ -38,10 +36,9 @@ const menuItems = [
     name: "Saturday Morning Blend",
     desc: "Single-origin pour-over with notes of dark chocolate, caramel, and a hint of dried cherry.",
     price: "120",
-    unit: "฿",
     emoji: "☕",
     badge: "Bestseller",
-    gradient: "linear-gradient(145deg, #D4B896 0%, #8B5E3C 100%)",
+    hue: "#C8A882",
   },
   {
     id: 2,
@@ -49,10 +46,9 @@ const menuItems = [
     name: "Golden Hour Latte",
     desc: "Espresso, steamed oat milk, turmeric, and a touch of honey — warm and deeply soothing.",
     price: "135",
-    unit: "฿",
     emoji: "🌿",
     badge: "New",
-    gradient: "linear-gradient(145deg, #C4956A 0%, #6B4226 100%)",
+    hue: "#9A7050",
   },
   {
     id: 3,
@@ -60,10 +56,9 @@ const menuItems = [
     name: "Sourdough & Ricotta",
     desc: "House sourdough, whipped ricotta, seasonal jam, crushed pistachios, and wild honey.",
     price: "190",
-    unit: "฿",
     emoji: "🍞",
     badge: null,
-    gradient: "linear-gradient(145deg, #E8C99A 0%, #A0714F 100%)",
+    hue: "#B89060",
   },
   {
     id: 4,
@@ -71,167 +66,236 @@ const menuItems = [
     name: "Brown Butter Financier",
     desc: "Crisp almond cakes baked fresh every Saturday, dusted with powdered sugar and sea salt.",
     price: "95",
-    unit: "฿",
     emoji: "🧁",
-    badge: "Saturday Only",
-    gradient: "linear-gradient(145deg, #BF8A60 0%, #4A2C14 100%)",
+    badge: "Sat only",
+    hue: "#7A5A40",
   },
 ];
 
-const navLinks = [
-  { href: "#about", label: "เกี่ยวกับเรา" },
-  { href: "#menu", label: "เมนู" },
-  { href: "#contact", label: "ติดต่อ" },
+const socialLinks = [
+  { name: "Instagram", handle: "@dontmissthissaturday", href: "https://instagram.com" },
+  { name: "Facebook", handle: "Don't Miss This Saturday", href: "https://facebook.com" },
+  { name: "Line OA", handle: "@dontmisssaturday", href: "https://line.me" },
 ];
 
-/* ─── Navbar ──────────────────────────────────────────────────── */
+const hours = [
+  { day: "วันเสาร์", time: "09:00 – 18:00", active: true },
+  { day: "วันอาทิตย์", time: "10:00 – 17:00", active: false },
+  { day: "จันทร์ – ศุกร์", time: "ปิด", active: false },
+];
+
+/* ─── Navbar ───────────────────────────────────────────────────── */
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("hero");
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 48);
-
-      const sections = ["hero", "about", "menu", "contact"];
-      const current = sections.find((id) => {
-        const el = document.getElementById(id);
-        if (!el) return false;
-        const rect = el.getBoundingClientRect();
-        return rect.top <= 100 && rect.bottom > 100;
-      });
-      if (current) setActiveSection(current);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    const handler = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
   }, []);
-
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? "bg-[#FAF7F2]/96 backdrop-blur-xl shadow-[0_1px_32px_rgba(44,26,14,0.07)]"
-          : "bg-transparent"
-      }`}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        transition: "background 0.4s ease, box-shadow 0.4s ease",
+        background: scrolled ? "rgba(250,248,244,0.95)" : "transparent",
+        backdropFilter: scrolled ? "blur(14px)" : "none",
+        boxShadow: scrolled ? "0 1px 0 rgba(221,214,203,0.7)" : "none",
+      }}
     >
-      <nav className="max-w-6xl mx-auto px-6 md:px-10 flex items-center justify-between h-16 md:h-20">
+      {/* Nav container */}
+      <div
+        style={{
+          maxWidth: "1100px",
+          margin: "0 auto",
+          padding: "0 1.5rem",
+          height: "4rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         {/* Logo */}
         <a
           href="#hero"
-          className="group flex flex-col leading-tight"
-          style={{ fontFamily: "'Playfair Display', serif" }}
+          style={{
+            fontFamily: "'Instrument Serif', serif",
+            textDecoration: "none",
+            display: "flex",
+            flexDirection: "column",
+            lineHeight: 1.2,
+          }}
         >
           <span
-            className={`text-[13px] md:text-sm font-semibold tracking-wider uppercase transition-colors duration-300 ${
-              scrolled ? "text-[#4A2C14]" : "text-[#FAF7F2]"
-            }`}
+            style={{
+              fontSize: "0.75rem",
+              fontWeight: 400,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: scrolled ? "#1E1610" : "#FDFAF6",
+              transition: "color 0.3s",
+            }}
           >
             don&apos;t miss
           </span>
           <span
-            className={`text-[13px] md:text-sm italic font-medium transition-colors duration-300 ${
-              scrolled ? "text-[#8B5E3C]" : "text-[#C4956A]"
-            }`}
+            style={{
+              fontSize: "0.75rem",
+              fontStyle: "italic",
+              color: scrolled ? "#A88060" : "#C4A882",
+              transition: "color 0.3s",
+            }}
           >
             this saturday
           </span>
         </a>
 
-        {/* Desktop links */}
-        <ul className="hidden md:flex items-center gap-7">
-          {navLinks.map((l) => (
-            <li key={l.href}>
-              <a
-                href={l.href}
-                className={`nav-link text-[13px] font-medium tracking-wide transition-colors duration-200 ${
-                  scrolled
-                    ? activeSection === l.href.slice(1)
-                      ? "text-[#8B5E3C]"
-                      : "text-[#4A2C14]/70 hover:text-[#8B5E3C]"
-                    : activeSection === l.href.slice(1)
-                    ? "text-[#C4956A]"
-                    : "text-[#FAF7F2]/70 hover:text-[#FAF7F2]"
-                }`}
-              >
-                {l.label}
-              </a>
-            </li>
-          ))}
-          <li>
-            <a
-              href="#menu"
-              className={`ml-1 px-5 py-2.5 rounded-full text-[13px] font-medium tracking-wide transition-all duration-300 ${
-                scrolled
-                  ? "bg-[#8B5E3C] text-[#FAF7F2] hover:bg-[#6B4226] shadow-[0_4px_20px_rgba(139,94,60,0.3)]"
-                  : "bg-[#FAF7F2]/15 text-[#FAF7F2] border border-[#FAF7F2]/30 hover:bg-[#FAF7F2]/25"
-              }`}
-            >
-              ดูเมนู
-            </a>
-          </li>
-        </ul>
-
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden w-9 h-9 flex flex-col justify-center items-center gap-[5px]"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle navigation"
+        {/* Desktop nav */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "2.25rem",
+          }}
+          className="desktop-nav"
         >
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className={`block h-[1.5px] bg-current transition-all duration-300 ${
-                scrolled ? "text-[#4A2C14]" : "text-[#FAF7F2]"
-              } ${
-                i === 0
-                  ? menuOpen
-                    ? "w-5 rotate-45 translate-y-[6.5px]"
-                    : "w-5"
-                  : i === 1
-                  ? menuOpen
-                    ? "w-5 opacity-0"
-                    : "w-4"
-                  : menuOpen
-                  ? "w-5 -rotate-45 -translate-y-[6.5px]"
-                  : "w-5"
-              }`}
-              style={{ backgroundColor: scrolled ? "#4A2C14" : "#FAF7F2" }}
-            />
-          ))}
-        </button>
-      </nav>
-
-      {/* Mobile drawer */}
-      <div
-        className={`md:hidden overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          menuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
-        } bg-[#FAF7F2]/98 backdrop-blur-xl border-t border-[#E8D5B7]/60`}
-      >
-        <div className="px-6 py-6 space-y-1">
-          {navLinks.map((l) => (
+          {[
+            { label: "เกี่ยวกับเรา", href: "#about" },
+            { label: "เมนู", href: "#menu" },
+            { label: "ติดต่อ", href: "#contact" },
+          ].map((l) => (
             <a
               key={l.href}
               href={l.href}
-              onClick={closeMenu}
-              className="flex items-center justify-between py-3 border-b border-[#E8D5B7]/60 text-[15px] font-medium text-[#4A2C14]/80 hover:text-[#8B5E3C] transition-colors"
+              className="nav-link"
+              style={{
+                fontSize: "0.8125rem",
+                fontWeight: 400,
+                color: scrolled ? "rgba(30,22,16,0.6)" : "rgba(253,250,246,0.6)",
+                transition: "color 0.2s",
+              }}
             >
               {l.label}
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
             </a>
           ))}
-          <div className="pt-4">
+          <a
+            href="#menu"
+            className="btn-primary"
+            style={{
+              background: "#A88060",
+              color: "#FDFAF6",
+              boxShadow: "0 2px 14px rgba(168,128,96,0.35)",
+            }}
+          >
+            ดูเมนู
+          </a>
+        </div>
+
+        {/* Hamburger */}
+        <button
+          className="hamburger-btn"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle navigation"
+          style={{
+            width: "2rem",
+            height: "2rem",
+            display: "none",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "5px",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          <span
+            style={{
+              display: "block",
+              width: "1.25rem",
+              height: "1px",
+              background: scrolled ? "#1E1610" : "#FDFAF6",
+              transition: "all 0.3s",
+              transform: menuOpen ? "rotate(45deg) translate(2.5px, 2.5px)" : "none",
+            }}
+          />
+          <span
+            style={{
+              display: "block",
+              width: "1rem",
+              height: "1px",
+              background: scrolled ? "#1E1610" : "#FDFAF6",
+              opacity: menuOpen ? 0 : 1,
+              transition: "opacity 0.3s",
+            }}
+          />
+          <span
+            style={{
+              display: "block",
+              width: "1.25rem",
+              height: "1px",
+              background: scrolled ? "#1E1610" : "#FDFAF6",
+              transition: "all 0.3s",
+              transform: menuOpen ? "rotate(-45deg) translate(2.5px, -2.5px)" : "none",
+            }}
+          />
+        </button>
+      </div>
+
+      {/* Mobile menu */}
+      <div
+        style={{
+          overflow: "hidden",
+          maxHeight: menuOpen ? "360px" : "0",
+          opacity: menuOpen ? 1 : 0,
+          transition: "max-height 0.4s ease, opacity 0.3s",
+          background: "#FAF8F4",
+          borderTop: "1px solid #EEE9E1",
+        }}
+      >
+        <div
+          style={{
+            padding: "1.25rem 1.5rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0",
+          }}
+        >
+          {[
+            { label: "เกี่ยวกับเรา", href: "#about" },
+            { label: "เมนู", href: "#menu" },
+            { label: "ติดต่อ", href: "#contact" },
+          ].map((l) => (
+            <a
+              key={l.href}
+              href={l.href}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                display: "block",
+                padding: "0.875rem 0",
+                fontSize: "0.9375rem",
+                color: "#1E1610",
+                textDecoration: "none",
+                borderBottom: "1px solid #EEE9E1",
+              }}
+            >
+              {l.label}
+            </a>
+          ))}
+          <div style={{ paddingTop: "1rem" }}>
             <a
               href="#menu"
-              onClick={closeMenu}
-              className="w-full inline-flex items-center justify-center px-6 py-3.5 rounded-full bg-[#8B5E3C] text-[#FAF7F2] text-sm font-medium tracking-wide shadow-[0_4px_20px_rgba(139,94,60,0.3)]"
+              onClick={() => setMenuOpen(false)}
+              className="btn-primary"
+              style={{ width: "100%", background: "#A88060", color: "#FDFAF6" }}
             >
-              ดูเมนูทั้งหมด
+              ดูเมนู
             </a>
           </div>
         </div>
@@ -240,112 +304,209 @@ function Navbar() {
   );
 }
 
-/* ─── Hero ────────────────────────────────────────────────────── */
+/* ─── Hero ─────────────────────────────────────────────────────── */
 function Hero() {
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
-      style={{ background: "#1E1108" }}
+      style={{
+        minHeight: "100dvh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#17100A",
+        position: "relative",
+        overflow: "hidden",
+      }}
     >
-      {/* Multi-layer warm radial backdrop */}
+      {/* Ambient gradient */}
       <div
-        className="absolute inset-0"
         style={{
-          background: `
-            radial-gradient(ellipse 80% 70% at 15% 60%, rgba(139,94,60,0.35) 0%, transparent 55%),
-            radial-gradient(ellipse 60% 50% at 85% 15%, rgba(196,149,106,0.25) 0%, transparent 50%),
-            radial-gradient(ellipse 50% 60% at 55% 90%, rgba(107,66,38,0.3) 0%, transparent 55%),
-            #1E1108
-          `,
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(ellipse 70% 60% at 50% 38%, rgba(168,128,96,0.2) 0%, transparent 70%)",
+          pointerEvents: "none",
         }}
       />
 
-      {/* Film-grain noise */}
+      {/* Dot grid */}
       <div
-        className="absolute inset-0 opacity-[0.06] pointer-events-none mix-blend-overlay"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          opacity: 0.04,
+          backgroundImage: "radial-gradient(circle, #C4A882 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
         }}
       />
 
-      {/* Geometric ring ornaments */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-        <div className="absolute right-[8%] top-[12%] w-56 h-56 rounded-full border border-[#C4956A]/10" />
-        <div className="absolute right-[5%] top-[8%] w-80 h-80 rounded-full border border-[#C4956A]/06" />
-        <div className="absolute right-[2%] top-[4%] w-[440px] h-[440px] rounded-full border border-[#C4956A]/04" />
-        <div className="absolute -left-20 bottom-[10%] w-72 h-72 rounded-full border border-[#8B5E3C]/12" />
-        <div className="absolute left-[40%] top-[50%] w-px h-[30vh] bg-gradient-to-b from-transparent via-[#C4956A]/15 to-transparent" />
-      </div>
-
-      {/* Horizontal rule lines */}
-      <div className="absolute inset-x-0 top-[30%] h-px bg-gradient-to-r from-transparent via-[#C4956A]/10 to-transparent pointer-events-none" />
-      <div className="absolute inset-x-0 bottom-[28%] h-px bg-gradient-to-r from-transparent via-[#C4956A]/08 to-transparent pointer-events-none" />
-
-      {/* Main content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-5xl mx-auto w-full">
-
-        {/* Eyebrow tag */}
-        <div className="animate-fade-up mb-7 md:mb-10">
-          <span className="pill text-[#C4956A] border-[#C4956A]/35 bg-[#C4956A]/08">
-            <span className="w-1 h-1 rounded-full bg-[#C4956A] inline-block" />
+      {/* Content */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 1,
+          textAlign: "center",
+          padding: "7rem 1.5rem 4rem",
+          maxWidth: "760px",
+          margin: "0 auto",
+          width: "100%",
+        }}
+      >
+        {/* Eyebrow */}
+        <div className="anim-fade-up">
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              fontSize: "0.6875rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "rgba(196,168,130,0.7)",
+              fontWeight: 400,
+            }}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                width: "4px",
+                height: "4px",
+                borderRadius: "50%",
+                background: "#C4A882",
+              }}
+            />
             Hangout Space · Bangkok
           </span>
         </div>
 
-        {/* Main heading */}
-        <div className="animate-fade-up-delay-1 mb-6 md:mb-8">
-          <h1 style={{ fontFamily: "'Playfair Display', serif" }}>
-            <span className="block text-[#FAF7F2] text-[clamp(3.2rem,10vw,7rem)] font-[400] leading-[1.02] tracking-[-0.02em]">
+        {/* Heading */}
+        <div className="anim-fade-up-1" style={{ marginTop: "1.5rem", marginBottom: "1.25rem" }}>
+          <h1
+            style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontWeight: 400,
+              lineHeight: 1.05,
+              letterSpacing: "-0.01em",
+              color: "#FDFAF6",
+            }}
+          >
+            <span style={{ display: "block", fontSize: "clamp(3rem, 11vw, 6.5rem)" }}>
               don&apos;t miss
             </span>
-            <span className="block text-[#C4956A] text-[clamp(3.2rem,10vw,7rem)] font-[400] italic leading-[1.02] tracking-[-0.01em]">
+            <span
+              style={{
+                display: "block",
+                fontSize: "clamp(3rem, 11vw, 6.5rem)",
+                fontStyle: "italic",
+                color: "#C4A882",
+              }}
+            >
               this saturday
             </span>
           </h1>
         </div>
 
-        {/* Ornament divider */}
-        <div className="animate-fade-up-delay-2 flex items-center justify-center gap-5 mb-7 md:mb-9">
-          <div className="h-px w-20 bg-gradient-to-r from-transparent to-[#C4956A]/50" />
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M10 2L12.39 7.26L18 8.18L14 12.08L14.9 17.66L10 15L5.1 17.66L6 12.08L2 8.18L7.61 7.26L10 2Z"
-              fill="none" stroke="#C4956A" strokeWidth="1" strokeLinejoin="round" opacity="0.6"/>
-          </svg>
-          <div className="h-px w-20 bg-gradient-to-l from-transparent to-[#C4956A]/50" />
+        {/* Divider */}
+        <div
+          className="anim-fade-up-2"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "1rem",
+            margin: "1.75rem 0",
+          }}
+        >
+          <div className="anim-line-left" style={{ width: "3rem", height: "1px", background: "rgba(196,168,130,0.4)" }} />
+          <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#C4A882", opacity: 0.6 }} />
+          <div className="anim-line-right" style={{ width: "3rem", height: "1px", background: "rgba(196,168,130,0.4)" }} />
         </div>
 
         {/* Tagline */}
-        <p className="animate-fade-up-delay-2 text-[#FAF7F2]/65 text-base md:text-lg lg:text-xl leading-[1.75] max-w-[38ch] mx-auto font-light tracking-[0.01em]">
+        <p
+          className="anim-fade-up-2"
+          style={{
+            color: "rgba(253,250,246,0.5)",
+            fontSize: "clamp(0.9375rem, 2vw, 1.0625rem)",
+            lineHeight: 1.8,
+            fontWeight: 300,
+            maxWidth: "36ch",
+            margin: "0 auto",
+          }}
+        >
           พื้นที่อบอุ่นสำหรับกาแฟดี ๆ อาหารอร่อย
-          <br className="hidden sm:block" />
+          <br />
           และบทสนทนาที่คุณจะไม่ลืม
         </p>
 
-        {/* CTA buttons */}
-        <div className="animate-fade-up-delay-3 flex flex-col sm:flex-row items-center gap-3 mt-10 md:mt-12">
+        {/* CTAs */}
+        <div
+          className="anim-fade-up-3"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.75rem",
+            marginTop: "2.5rem",
+          }}
+        >
           <a
             href="#menu"
-            className="px-8 py-4 bg-[#8B5E3C] text-[#FAF7F2] rounded-full text-[13px] font-semibold tracking-[0.06em] uppercase hover:bg-[#6B4226] transition-all duration-300 shadow-[0_8px_32px_rgba(139,94,60,0.45)] hover:shadow-[0_12px_40px_rgba(139,94,60,0.55)] hover:-translate-y-0.5"
+            className="btn-primary"
+            style={{
+              background: "#A88060",
+              color: "#FDFAF6",
+              boxShadow: "0 4px 24px rgba(168,128,96,0.45)",
+              minWidth: "160px",
+            }}
           >
             ดูเมนูทั้งหมด
           </a>
           <a
             href="#about"
-            className="px-8 py-[15px] border border-[#FAF7F2]/20 text-[#FAF7F2]/70 rounded-full text-[13px] font-medium tracking-[0.06em] uppercase hover:border-[#C4956A]/50 hover:text-[#FAF7F2] transition-all duration-300"
+            className="btn-outline"
+            style={{
+              borderColor: "rgba(253,250,246,0.2)",
+              color: "rgba(253,250,246,0.6)",
+              minWidth: "160px",
+            }}
           >
             เรื่องราวของเรา
           </a>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="animate-fade-up-delay-4 absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
-          <span className="text-[#C4956A]/50 text-[9px] tracking-[0.3em] uppercase font-medium">scroll</span>
-          <div className="scroll-arrow flex flex-col items-center gap-1">
-            <div className="w-px h-8 bg-gradient-to-b from-[#C4956A]/50 to-transparent" />
-            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-              <path d="M1 1l4 4 4-4" stroke="#C4956A" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
-            </svg>
+        {/* Scroll hint */}
+        <div
+          className="anim-fade-up-4"
+          style={{
+            marginTop: "5rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "0.5rem",
+          }}
+        >
+          <span
+            style={{
+              fontSize: "0.625rem",
+              letterSpacing: "0.25em",
+              textTransform: "uppercase",
+              color: "rgba(196,168,130,0.4)",
+            }}
+          >
+            scroll
+          </span>
+          <div className="anim-scroll-bounce">
+            <div
+              style={{
+                width: "1px",
+                height: "3rem",
+                background: "linear-gradient(to bottom, rgba(196,168,130,0.4), transparent)",
+              }}
+            />
           </div>
         </div>
       </div>
@@ -353,92 +514,206 @@ function Hero() {
   );
 }
 
-/* ─── About ───────────────────────────────────────────────────── */
+/* ─── About ────────────────────────────────────────────────────── */
 function About() {
   const ref = useReveal();
 
   return (
-    <section id="about" className="py-28 md:py-40 bg-[#FAF7F2] overflow-hidden" ref={ref}>
-      <div className="max-w-6xl mx-auto px-6 md:px-10">
-        <div className="grid md:grid-cols-2 gap-16 md:gap-20 lg:gap-28 items-center">
+    <section
+      id="about"
+      ref={ref as React.RefObject<HTMLElement>}
+      style={{
+        padding: "6rem 0",
+        background: "#FAF8F4",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1100px",
+          margin: "0 auto",
+          padding: "0 1.5rem",
+        }}
+      >
+        {/* Section label */}
+        <div className="reveal" style={{ marginBottom: "2.5rem" }}>
+          <span className="section-label" style={{ color: "#A88060" }}>
+            เกี่ยวกับเรา
+          </span>
+        </div>
 
-          {/* Left — visual */}
-          <div className="relative order-2 md:order-1 reveal-left">
-            {/* Main image block */}
-            <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-[0_32px_80px_rgba(44,26,14,0.15)]">
+        {/* Grid: left = visual, right = copy */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr",
+            gap: "3rem",
+            alignItems: "start",
+          }}
+          className="about-grid"
+        >
+          {/* ── Left column: visual block ── */}
+          <div className="reveal reveal-d1">
+            <div style={{ position: "relative", maxWidth: "420px" }}>
+              {/* Main card */}
               <div
-                className="absolute inset-0"
                 style={{
-                  background: "linear-gradient(155deg, #C4956A 0%, #7A4F2E 45%, #2C1A0E 100%)",
+                  aspectRatio: "3/4",
+                  borderRadius: "1.5rem",
+                  overflow: "hidden",
+                  position: "relative",
                 }}
-              />
-              {/* Layered SVG shapes */}
-              <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice">
-                <ellipse cx="300" cy="120" rx="180" ry="180" fill="#FAF7F2" />
-                <ellipse cx="100" cy="400" rx="140" ry="140" fill="#FAF7F2" />
-                <ellipse cx="240" cy="320" rx="110" ry="110" fill="#FAF7F2" />
-              </svg>
-              {/* Inner content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8">
-                <p
-                  className="text-[#FAF7F2]/50 text-xl tracking-[0.25em] uppercase font-medium"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                {/* Gradient bg */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "linear-gradient(160deg, #C8A882 0%, #8A6A4A 50%, #3A2414 100%)",
+                  }}
+                />
+                {/* SVG shapes */}
+                <svg
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.08 }}
+                  viewBox="0 0 400 533"
+                  preserveAspectRatio="xMidYMid slice"
                 >
-                  Est.
-                </p>
-                <p
-                  className="text-[#FAF7F2] text-[7rem] md:text-[8rem] leading-none font-semibold tracking-tight"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
+                  <circle cx="320" cy="100" r="200" fill="#FAF8F4" />
+                  <circle cx="80" cy="440" r="150" fill="#FAF8F4" />
+                  <circle cx="280" cy="380" r="100" fill="#FAF8F4" />
+                </svg>
+                {/* Text content */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    padding: "2rem",
+                  }}
                 >
-                  2021
-                </p>
-                <div className="mt-5 flex items-center gap-3">
-                  <div className="w-8 h-px bg-[#FAF7F2]/35" />
-                  <p className="text-[#FAF7F2]/55 text-[10px] tracking-[0.25em] uppercase">Bangkok · Thailand</p>
-                  <div className="w-8 h-px bg-[#FAF7F2]/35" />
+                  <p
+                    style={{
+                      fontSize: "0.75rem",
+                      letterSpacing: "0.3em",
+                      textTransform: "uppercase",
+                      color: "rgba(253,250,246,0.45)",
+                      fontWeight: 400,
+                    }}
+                  >
+                    Est.
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: "'Instrument Serif', serif",
+                      fontSize: "clamp(4rem, 12vw, 7rem)",
+                      fontWeight: 400,
+                      color: "#FDFAF6",
+                      lineHeight: 1,
+                    }}
+                  >
+                    2021
+                  </p>
+                  <div
+                    style={{
+                      marginTop: "1.25rem",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                    }}
+                  >
+                    <div style={{ width: "2rem", height: "1px", background: "rgba(253,250,246,0.3)" }} />
+                    <p
+                      style={{
+                        fontSize: "0.625rem",
+                        letterSpacing: "0.2em",
+                        textTransform: "uppercase",
+                        color: "rgba(253,250,246,0.45)",
+                      }}
+                    >
+                      Bangkok
+                    </p>
+                    <div style={{ width: "2rem", height: "1px", background: "rgba(253,250,246,0.3)" }} />
+                  </div>
                 </div>
               </div>
-              {/* Bottom fade */}
-              <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#2C1A0E]/40 to-transparent" />
-            </div>
 
-            {/* Floating hours card */}
-            <div className="absolute -bottom-5 -right-3 md:-right-6 bg-[#2C1A0E] rounded-2xl px-6 py-5 shadow-[0_16px_48px_rgba(44,26,14,0.35)]">
-              <p
-                className="text-[#C4956A] text-4xl font-semibold leading-none"
-                style={{ fontFamily: "'Playfair Display', serif" }}
+              {/* Floating hours card */}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "-1.25rem",
+                  right: "-1rem",
+                  background: "#17100A",
+                  borderRadius: "1rem",
+                  padding: "1rem 1.25rem",
+                  minWidth: "140px",
+                  boxShadow: "0 8px 32px rgba(23,16,10,0.45)",
+                  zIndex: 10,
+                }}
               >
-                Sat
-              </p>
-              <div className="mt-3 space-y-1">
-                <p className="text-[#FAF7F2] text-sm font-medium">09:00 – 18:00</p>
-                <p className="text-[#FAF7F2]/40 text-[10px] tracking-wide uppercase">เปิดทุกวันเสาร์</p>
+                <p
+                  style={{
+                    fontFamily: "'Instrument Serif', serif",
+                    fontSize: "1.75rem",
+                    color: "#C4A882",
+                    fontWeight: 400,
+                    lineHeight: 1,
+                  }}
+                >
+                  Sat
+                </p>
+                <p style={{ marginTop: "0.375rem", fontSize: "0.8125rem", color: "#FDFAF6", fontWeight: 400 }}>
+                  09:00 – 18:00
+                </p>
+                <p
+                  style={{
+                    marginTop: "0.125rem",
+                    fontSize: "0.6875rem",
+                    color: "rgba(253,250,246,0.35)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  เปิดทุกเสาร์
+                </p>
               </div>
-            </div>
 
-            {/* Dashed ring ornament */}
-            <div className="absolute -top-5 -left-5 w-28 h-28 rounded-full border-2 border-dashed border-[#C4956A]/25 pointer-events-none" />
-            <div className="absolute -top-2 -left-2 w-16 h-16 rounded-full border border-[#C4956A]/15 pointer-events-none" />
+              {/* Decorative ring */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "-1rem",
+                  left: "-1rem",
+                  width: "4rem",
+                  height: "4rem",
+                  borderRadius: "50%",
+                  border: "1.5px dashed rgba(168,128,96,0.3)",
+                  pointerEvents: "none",
+                }}
+              />
+            </div>
           </div>
 
-          {/* Right — copy */}
-          <div className="order-1 md:order-2 space-y-6">
-            <div className="reveal">
-              <span className="pill text-[#8B5E3C] border-[#8B5E3C]/30">
-                เกี่ยวกับเรา
-              </span>
-            </div>
-
+          {/* ── Right column: copy ── */}
+          <div className="reveal reveal-d2" style={{ display: "flex", flexDirection: "column", gap: "1.5rem", paddingTop: "0.5rem" }}>
             <h2
-              className="reveal reveal-delay-1 text-[#2C1A0E] text-4xl md:text-[2.8rem] lg:text-5xl leading-[1.1] tracking-tight"
-              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 400 }}
+              style={{
+                fontFamily: "'Instrument Serif', serif",
+                fontSize: "clamp(2rem, 4.5vw, 2.75rem)",
+                fontWeight: 400,
+                lineHeight: 1.15,
+                color: "#1E1610",
+              }}
             >
-              พื้นที่ที่ถูก
+              พื้นที่ที่ถูกสร้าง
               <br />
-              <em className="text-[#8B5E3C]">สร้างขึ้นเพื่อวันเสาร์</em>
+              <em style={{ color: "#A88060" }}>เพื่อวันเสาร์</em>
             </h2>
 
-            <div className="reveal reveal-delay-2 space-y-4 text-[#4A2C14]/70 leading-[1.85] text-[15px] md:text-base">
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", color: "#6A5A4E", fontSize: "0.9375rem", lineHeight: 1.85 }}>
               <p>
                 &ldquo;don&apos;t miss this saturday&rdquo; เกิดขึ้นจากความเชื่อว่าวันหยุดที่ดีควรเริ่มต้นด้วยบรรยากาศที่ใช่ —
                 ไม่เร่งรีบ ไม่ตึงเครียด แค่อบอุ่นและเป็นกันเอง
@@ -453,119 +728,276 @@ function About() {
             </div>
 
             {/* Stats */}
-            <div className="reveal reveal-delay-3 grid grid-cols-3 gap-2 pt-8 mt-8 border-t border-[#E8D5B7]">
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "0.5rem",
+                paddingTop: "2rem",
+                borderTop: "1px solid #EEE9E1",
+              }}
+            >
               {[
                 { val: "4+", label: "ปีที่เปิด" },
                 { val: "120+", label: "เมนูผ่านมา" },
                 { val: "∞", label: "ความทรงจำดี ๆ" },
               ].map((s) => (
-                <div key={s.label} className="text-center py-2">
+                <div key={s.label} style={{ textAlign: "center", padding: "0.5rem 0" }}>
                   <p
-                    className="text-[#8B5E3C] text-[1.9rem] md:text-4xl font-semibold leading-none"
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{
+                      fontFamily: "'Instrument Serif', serif",
+                      fontSize: "clamp(1.5rem, 3.5vw, 2rem)",
+                      color: "#A88060",
+                      fontWeight: 400,
+                      lineHeight: 1,
+                    }}
                   >
                     {s.val}
                   </p>
-                  <p className="text-[#4A2C14]/45 text-[11px] mt-2 leading-snug tracking-wide">{s.label}</p>
+                  <p
+                    style={{
+                      marginTop: "0.375rem",
+                      fontSize: "0.6875rem",
+                      color: "#6A5A4E",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    {s.label}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
-
         </div>
       </div>
     </section>
   );
 }
 
-/* ─── Menu ────────────────────────────────────────────────────── */
+/* ─── Menu ─────────────────────────────────────────────────────── */
 function Menu() {
   const ref = useReveal();
 
   return (
-    <section id="menu" className="py-28 md:py-40 bg-[#F5EFE6] overflow-hidden" ref={ref}>
-      <div className="max-w-6xl mx-auto px-6 md:px-10">
-
+    <section
+      id="menu"
+      ref={ref as React.RefObject<HTMLElement>}
+      style={{
+        padding: "6rem 0",
+        background: "#EEE9E1",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1100px",
+          margin: "0 auto",
+          padding: "0 1.5rem",
+        }}
+      >
         {/* Header */}
-        <div className="text-center mb-16 md:mb-20">
-          <div className="reveal inline-block">
-            <span className="pill text-[#8B5E3C] border-[#8B5E3C]/30">สัปดาห์นี้</span>
+        <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
+          <div className="reveal">
+            <span className="section-label" style={{ color: "#A88060", display: "inline-block", marginBottom: "0.75rem" }}>
+              สัปดาห์นี้
+            </span>
           </div>
           <h2
-            className="reveal reveal-delay-1 text-[#2C1A0E] text-4xl md:text-[2.8rem] lg:text-5xl mt-5 tracking-tight"
-            style={{ fontFamily: "'Playfair Display', serif", fontWeight: 400 }}
+            className="reveal reveal-d1"
+            style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontSize: "clamp(2rem, 4.5vw, 2.75rem)",
+              fontWeight: 400,
+              color: "#1E1610",
+              lineHeight: 1.15,
+            }}
           >
             เมนูแนะนำ
           </h2>
-          <p className="reveal reveal-delay-2 mt-4 text-[#4A2C14]/55 text-[15px] max-w-[36ch] mx-auto leading-relaxed">
+          <p
+            className="reveal reveal-d2"
+            style={{
+              marginTop: "0.75rem",
+              fontSize: "0.9375rem",
+              color: "#6A5A4E",
+              maxWidth: "32ch",
+              margin: "0.75rem auto 0",
+              lineHeight: 1.65,
+            }}
+          >
             คัดมาเพื่อคุณโดยเฉพาะ — เปลี่ยนตามฤดูกาล หมดแล้วหมดเลย
           </p>
         </div>
 
-        {/* Cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
+        {/* Cards grid — horizontal scroll on mobile, 2-col tablet, 4-col desktop */}
+        <div
+          className="menu-scroll-wrapper"
+          style={{
+            display: "flex",
+            gap: "1rem",
+            overflowX: "auto",
+            paddingBottom: "1.5rem",
+            scrollSnapType: "x mandatory",
+            WebkitOverflowScrolling: "touch",
+            /* Hide scrollbar but keep functionality */
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
           {menuItems.map((item, i) => (
             <article
               key={item.id}
-              className={`menu-card reveal reveal-delay-${i + 1} relative bg-[#FAF7F2] rounded-2xl overflow-hidden shadow-[0_2px_24px_rgba(44,26,14,0.07)] flex flex-col`}
+              className={`reveal menu-card-item reveal-d${i + 1}`}
+              style={{
+                flexShrink: 0,
+                width: "78vw",
+                maxWidth: "320px",
+                background: "#FAF8F4",
+                borderRadius: "1.25rem",
+                overflow: "hidden",
+                scrollSnapAlign: "start",
+              }}
             >
-              {/* Badge */}
-              {item.badge && (
-                <div className="absolute top-3.5 left-3.5 z-20 bg-[#2C1A0E] text-[#C4956A] text-[9px] font-semibold tracking-[0.12em] uppercase px-2.5 py-1 rounded-full">
-                  {item.badge}
-                </div>
-              )}
-
               {/* Image area */}
-              <div className="relative h-48 overflow-hidden flex-shrink-0">
+              <div style={{ position: "relative", height: "11rem", overflow: "hidden" }}>
                 <div
-                  className="card-image-inner absolute inset-0"
-                  style={{ background: item.gradient }}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: `linear-gradient(145deg, ${item.hue} 0%, ${item.hue}cc 100%)`,
+                  }}
                 />
-                {/* Concentric circle */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-36 h-36 rounded-full" style={{ background: "rgba(250,247,242,0.1)" }} />
-                  <div className="w-52 h-52 rounded-full absolute" style={{ background: "rgba(250,247,242,0.05)" }} />
+                {/* Concentric circles */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div style={{ width: "5.5rem", height: "5.5rem", borderRadius: "50%", background: "rgba(253,250,246,0.08)" }} />
+                  <div style={{ position: "absolute", width: "8rem", height: "8rem", borderRadius: "50%", background: "rgba(253,250,246,0.04)" }} />
                 </div>
                 {/* Emoji */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[3.2rem] drop-shadow-lg select-none" aria-hidden="true">
-                    {item.emoji}
-                  </span>
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "3rem",
+                    filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.15))",
+                  }}
+                >
+                  {item.emoji}
                 </div>
+                {/* Badge */}
+                {item.badge && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "0.75rem",
+                      left: "0.75rem",
+                      background: "#17100A",
+                      color: "#C4A882",
+                      fontSize: "0.625rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      padding: "0.25rem 0.625rem",
+                      borderRadius: "99px",
+                    }}
+                  >
+                    {item.badge}
+                  </div>
+                )}
                 {/* Category label */}
-                <span className="absolute bottom-3 left-4 text-[#FAF7F2]/75 text-[9px] tracking-[0.18em] uppercase font-medium">
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "0.75rem",
+                    left: "0.875rem",
+                    fontSize: "0.5625rem",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "rgba(253,250,246,0.65)",
+                    fontWeight: 500,
+                  }}
+                >
                   {item.category}
-                </span>
+                </div>
               </div>
 
               {/* Content */}
-              <div className="p-5 flex flex-col flex-1">
+              <div style={{ padding: "1.25rem" }}>
                 <h3
-                  className="text-[#2C1A0E] text-[1.05rem] leading-snug mb-2.5 flex-shrink-0"
-                  style={{ fontFamily: "'Playfair Display', serif", fontWeight: 500 }}
+                  style={{
+                    fontFamily: "'Instrument Serif', serif",
+                    fontSize: "1.0625rem",
+                    fontWeight: 400,
+                    color: "#1E1610",
+                    lineHeight: 1.3,
+                    marginBottom: "0.5rem",
+                  }}
                 >
                   {item.name}
                 </h3>
-                <p className="text-[#4A2C14]/55 text-[13px] leading-relaxed mb-5 line-clamp-3 flex-1">
+                <p
+                  style={{
+                    fontSize: "0.8125rem",
+                    color: "#6A5A4E",
+                    lineHeight: 1.65,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
                   {item.desc}
                 </p>
-                <div className="flex items-center justify-between pt-4 border-t border-[#E8D5B7] mt-auto">
-                  <div className="flex items-baseline gap-1">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginTop: "1rem",
+                    paddingTop: "0.875rem",
+                    borderTop: "1px solid #EEE9E1",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "0.25rem" }}>
                     <span
-                      className="text-[#8B5E3C] text-2xl font-semibold leading-none"
-                      style={{ fontFamily: "'Playfair Display', serif" }}
+                      style={{
+                        fontFamily: "'Instrument Serif', serif",
+                        fontSize: "1.375rem",
+                        color: "#A88060",
+                      }}
                     >
                       {item.price}
                     </span>
-                    <span className="text-[#4A2C14]/45 text-xs">{item.unit}</span>
+                    <span style={{ fontSize: "0.75rem", color: "#6A5A4E" }}>฿</span>
                   </div>
                   <button
-                    className="w-8 h-8 rounded-full bg-[#8B5E3C] flex items-center justify-center hover:bg-[#6B4226] active:scale-95 transition-all duration-200 shadow-[0_4px_16px_rgba(139,94,60,0.3)]"
+                    style={{
+                      width: "2rem",
+                      height: "2rem",
+                      borderRadius: "50%",
+                      background: "#A88060",
+                      border: "none",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "background 0.2s",
+                    }}
                     aria-label={`เพิ่ม ${item.name}`}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#8A6A4A"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "#A88060"; }}
                   >
-                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                      <path d="M6.5 1.5v10M1.5 6.5h10" stroke="#FAF7F2" strokeWidth="1.6" strokeLinecap="round" />
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M6 1.5v9M1.5 6h9" stroke="#FDFAF6" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                   </button>
                 </div>
@@ -574,8 +1006,17 @@ function Menu() {
           ))}
         </div>
 
-        {/* Footer note */}
-        <p className="reveal text-center text-[#4A2C14]/35 text-[13px] mt-12 italic tracking-wide">
+        {/* Note */}
+        <p
+          className="reveal"
+          style={{
+            textAlign: "center",
+            marginTop: "2.5rem",
+            fontSize: "0.8125rem",
+            color: "rgba(106,90,78,0.4)",
+            fontStyle: "italic",
+          }}
+        >
           * เมนูอาจเปลี่ยนแปลงตามวัตถุดิบที่หาได้ในแต่ละสัปดาห์
         </p>
       </div>
@@ -588,129 +1029,221 @@ function Contact() {
   const ref = useReveal();
 
   return (
-    <section id="contact" className="py-28 md:py-40 bg-[#2C1A0E] relative overflow-hidden" ref={ref}>
-
-      {/* Ambient glows */}
+    <section
+      id="contact"
+      ref={ref as React.RefObject<HTMLElement>}
+      style={{
+        padding: "6rem 0",
+        background: "#17100A",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* Ambient glow */}
       <div
-        className="absolute inset-0 pointer-events-none"
         style={{
-          background: `
-            radial-gradient(ellipse 65% 55% at 75% 35%, rgba(139,94,60,0.2) 0%, transparent 60%),
-            radial-gradient(ellipse 50% 45% at 15% 70%, rgba(196,149,106,0.1) 0%, transparent 60%)
-          `,
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background: "radial-gradient(ellipse 60% 50% at 70% 40%, rgba(168,128,96,0.15) 0%, transparent 65%)",
         }}
       />
 
-      {/* Subtle grid */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.025]"
         style={{
-          backgroundImage: `
-            linear-gradient(#C4956A 1px, transparent 1px),
-            linear-gradient(90deg, #C4956A 1px, transparent 1px)
-          `,
-          backgroundSize: "48px 48px",
+          position: "relative",
+          zIndex: 1,
+          maxWidth: "1100px",
+          margin: "0 auto",
+          padding: "0 1.5rem",
         }}
-      />
-
-      <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-10">
-
+      >
         {/* Header */}
-        <div className="text-center mb-16 md:mb-20">
-          <div className="reveal inline-block">
-            <span className="pill text-[#C4956A] border-[#C4956A]/30">มาเจอกัน</span>
+        <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
+          <div className="reveal">
+            <span className="section-label" style={{ color: "#C4A882", display: "inline-block", marginBottom: "0.75rem" }}>
+              มาเจอกัน
+            </span>
           </div>
           <h2
-            className="reveal reveal-delay-1 text-[#FAF7F2] text-4xl md:text-[2.8rem] lg:text-5xl mt-5 tracking-tight"
-            style={{ fontFamily: "'Playfair Display', serif", fontWeight: 400 }}
+            className="reveal reveal-d1"
+            style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontSize: "clamp(2rem, 4.5vw, 2.75rem)",
+              fontWeight: 400,
+              color: "#FDFAF6",
+              lineHeight: 1.15,
+            }}
           >
             ติดต่อและหาเรา
           </h2>
         </div>
 
-        {/* 3-column grid */}
-        <div className="grid md:grid-cols-3 gap-5 md:gap-6">
-
+        {/* 3-card grid */}
+        <div
+          className="contact-grid"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: "1.25rem",
+          }}
+        >
           {/* Location card */}
-          <div className="reveal reveal-delay-1 group bg-white/[0.04] border border-[#C4956A]/15 rounded-2xl p-7 hover:bg-white/[0.07] transition-colors duration-400">
-            <div className="w-11 h-11 rounded-xl bg-[#8B5E3C]/25 flex items-center justify-center mb-6 group-hover:bg-[#8B5E3C]/35 transition-colors">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C4956A" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                <circle cx="12" cy="9" r="2.5"/>
+          <div
+            className="reveal reveal-d1 card-hover"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(221,214,203,0.1)",
+              borderRadius: "1.25rem",
+              padding: "1.75rem",
+            }}
+          >
+            <div
+              style={{
+                width: "2.5rem",
+                height: "2.5rem",
+                borderRadius: "0.75rem",
+                background: "rgba(168,128,96,0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "1.25rem",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C4A882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                <circle cx="12" cy="9" r="2.5" />
               </svg>
             </div>
             <h3
-              className="text-[#FAF7F2] text-[1.1rem] mb-3 leading-snug"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{
+                fontFamily: "'Instrument Serif', serif",
+                fontSize: "1.125rem",
+                fontWeight: 400,
+                color: "#FDFAF6",
+                marginBottom: "0.75rem",
+              }}
             >
               ที่อยู่
             </h3>
-            <address className="not-italic text-[#FAF7F2]/55 text-sm leading-[1.9]">
-              123 ซอยสุขุมวิท 55<br />
-              แขวงคลองตันเหนือ<br />
+            <address
+              style={{
+                fontStyle: "normal",
+                fontSize: "0.875rem",
+                color: "rgba(253,250,246,0.45)",
+                lineHeight: 1.85,
+              }}
+            >
+              123 ซอยสุขุมวิท 55
+              <br />
+              แขวงคลองตันเหนือ
+              <br />
               เขตวัฒนา กรุงเทพฯ 10110
             </address>
             <a
               href="https://maps.google.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-5 text-[#C4956A] text-[12px] font-medium tracking-wide hover:text-[#E8B97A] transition-colors group/link"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.375rem",
+                marginTop: "1.25rem",
+                fontSize: "0.75rem",
+                color: "#C4A882",
+                textDecoration: "none",
+                letterSpacing: "0.04em",
+              }}
             >
               ดูแผนที่
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform">
-                <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </a>
           </div>
 
-          {/* Hours card (accent) */}
-          <div className="reveal reveal-delay-2 relative bg-[#8B5E3C] rounded-2xl p-7 overflow-hidden">
+          {/* Hours card */}
+          <div
+            className="reveal reveal-d2"
+            style={{
+              background: "#A88060",
+              borderRadius: "1.25rem",
+              padding: "1.75rem",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            {/* Glow orb */}
             <div
-              className="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-[0.18]"
-              style={{ background: "radial-gradient(circle, #FAF7F2 0%, transparent 70%)" }}
+              style={{
+                position: "absolute",
+                top: "-2rem",
+                right: "-2rem",
+                width: "5rem",
+                height: "5rem",
+                borderRadius: "50%",
+                background: "rgba(253,250,246,0.12)",
+                pointerEvents: "none",
+              }}
             />
             <div
-              className="absolute bottom-0 left-0 w-32 h-32 rounded-full opacity-[0.08]"
-              style={{ background: "radial-gradient(circle, #FAF7F2 0%, transparent 70%)" }}
-            />
-
-            <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center mb-6">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF7F2" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v6l4 2"/>
+              style={{
+                width: "2.5rem",
+                height: "2.5rem",
+                borderRadius: "0.75rem",
+                background: "rgba(253,250,246,0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "1.25rem",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FDFAF6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
               </svg>
             </div>
-
             <h3
-              className="text-[#FAF7F2] text-[1.1rem] mb-5 leading-snug"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{
+                fontFamily: "'Instrument Serif', serif",
+                fontSize: "1.125rem",
+                fontWeight: 400,
+                color: "#FDFAF6",
+                marginBottom: "1.25rem",
+              }}
             >
               เวลาทำการ
             </h3>
-
-            <div className="space-y-3.5">
-              {[
-                { day: "วันเสาร์", time: "09:00 – 18:00", highlight: true },
-                { day: "วันอาทิตย์", time: "10:00 – 16:00", highlight: false },
-                { day: "จันทร์ – ศุกร์", time: "ปิดทำการ", highlight: false },
-              ].map((h, i) => (
+            <div>
+              {hours.map((h, idx) => (
                 <div
                   key={h.day}
-                  className={`flex justify-between items-center text-sm pb-3.5 ${
-                    i < 2 ? "border-b border-[#FAF7F2]/15" : ""
-                  }`}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingBottom: "0.875rem",
+                    marginBottom: "0.875rem",
+                    borderBottom: idx < hours.length - 1 ? "1px solid rgba(253,250,246,0.12)" : "none",
+                  }}
                 >
-                  <span className={h.highlight ? "text-[#FAF7F2] font-semibold" : "text-[#FAF7F2]/55 text-[13px]"}>
+                  <span
+                    style={{
+                      fontSize: "0.875rem",
+                      color: h.active ? "#FDFAF6" : "rgba(253,250,246,0.5)",
+                      fontWeight: h.active ? 500 : 400,
+                    }}
+                  >
                     {h.day}
                   </span>
                   <span
-                    className={`text-[11px] px-3 py-1 rounded-full font-medium ${
-                      h.highlight
-                        ? "bg-[#FAF7F2]/20 text-[#FAF7F2]"
-                        : h.time === "ปิดทำการ"
-                        ? "text-[#FAF7F2]/30"
-                        : "text-[#FAF7F2]/60"
-                    }`}
+                    style={{
+                      fontSize: "0.75rem",
+                      padding: "0.25rem 0.625rem",
+                      borderRadius: "99px",
+                      background: h.active ? "rgba(253,250,246,0.15)" : "transparent",
+                      color: h.active ? "#FDFAF6" : h.time === "ปิด" ? "rgba(253,250,246,0.25)" : "rgba(253,250,246,0.5)",
+                    }}
                   >
                     {h.time}
                   </span>
@@ -720,102 +1253,153 @@ function Contact() {
           </div>
 
           {/* Social card */}
-          <div className="reveal reveal-delay-3 group bg-white/[0.04] border border-[#C4956A]/15 rounded-2xl p-7 hover:bg-white/[0.07] transition-colors duration-400">
-            <div className="w-11 h-11 rounded-xl bg-[#8B5E3C]/25 flex items-center justify-center mb-6 group-hover:bg-[#8B5E3C]/35 transition-colors">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C4956A" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          <div
+            className="reveal reveal-d3 card-hover"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(221,214,203,0.1)",
+              borderRadius: "1.25rem",
+              padding: "1.75rem",
+            }}
+          >
+            <div
+              style={{
+                width: "2.5rem",
+                height: "2.5rem",
+                borderRadius: "0.75rem",
+                background: "rgba(168,128,96,0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "1.25rem",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C4A882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
               </svg>
             </div>
-
             <h3
-              className="text-[#FAF7F2] text-[1.1rem] mb-2 leading-snug"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{
+                fontFamily: "'Instrument Serif', serif",
+                fontSize: "1.125rem",
+                fontWeight: 400,
+                color: "#FDFAF6",
+                marginBottom: "0.5rem",
+              }}
             >
               ติดตามเรา
             </h3>
-            <p className="text-[#FAF7F2]/40 text-[13px] mb-6 leading-relaxed">
+            <p
+              style={{
+                fontSize: "0.8125rem",
+                color: "rgba(253,250,246,0.35)",
+                marginBottom: "1.25rem",
+                lineHeight: 1.6,
+              }}
+            >
               อัปเดตเมนูและกิจกรรมใหม่ทุกสัปดาห์
             </p>
-
-            <div className="space-y-4">
-              {[
-                {
-                  name: "Instagram",
-                  handle: "@dontmissthissaturday",
-                  href: "https://instagram.com",
-                  icon: (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="2" width="20" height="20" rx="5"/>
-                      <circle cx="12" cy="12" r="4"/>
-                      <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
-                    </svg>
-                  ),
-                },
-                {
-                  name: "Facebook",
-                  handle: "Don't Miss This Saturday",
-                  href: "https://facebook.com",
-                  icon: (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-                    </svg>
-                  ),
-                },
-                {
-                  name: "Line OA",
-                  handle: "@dontmisssaturday",
-                  href: "https://line.me",
-                  icon: (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                  ),
-                },
-              ].map((s) => (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+              {socialLinks.map((s, idx) => (
                 <a
                   key={s.name}
                   href={s.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3.5 text-[#FAF7F2]/50 hover:text-[#C4956A] transition-colors duration-200 group/social"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    textDecoration: "none",
+                    padding: "0.625rem 0",
+                    borderBottom: idx < socialLinks.length - 1 ? "1px solid rgba(221,214,203,0.08)" : "none",
+                  }}
                 >
-                  <span className="w-8 h-8 rounded-lg bg-[#FAF7F2]/06 flex items-center justify-center text-current group-hover/social:bg-[#C4956A]/15 transition-colors flex-shrink-0">
-                    {s.icon}
+                  <span
+                    style={{
+                      width: "2rem",
+                      height: "2rem",
+                      borderRadius: "0.5rem",
+                      background: "rgba(255,255,255,0.05)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {/* Instagram icon */}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(253,250,246,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="2" width="20" height="20" rx="5" />
+                      <circle cx="12" cy="12" r="4" />
+                      <circle cx="17.5" cy="6.5" r="0.8" fill="rgba(253,250,246,0.5)" stroke="none" />
+                    </svg>
                   </span>
                   <div>
-                    <p className="text-[13px] font-medium text-[#FAF7F2]/70 group-hover/social:text-[#C4956A] transition-colors leading-none mb-0.5">
+                    <p style={{ fontSize: "0.8125rem", fontWeight: 500, color: "rgba(253,250,246,0.65)" }}>
                       {s.name}
                     </p>
-                    <p className="text-[11px] text-[#FAF7F2]/35 leading-none">{s.handle}</p>
+                    <p style={{ fontSize: "0.6875rem", color: "rgba(253,250,246,0.3)", marginTop: "0.125rem" }}>
+                      {s.handle}
+                    </p>
                   </div>
                 </a>
               ))}
             </div>
           </div>
-
         </div>
 
-        {/* Bottom bar */}
-        <div className="reveal mt-20 pt-8 border-t border-[#C4956A]/12 flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Divider */}
+        <div
+          className="reveal"
+          style={{
+            marginTop: "4rem",
+            height: "1px",
+            background: "rgba(221,214,203,0.08)",
+          }}
+        />
+
+        {/* Footer */}
+        <div
+          className="reveal"
+          style={{
+            marginTop: "2rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "1rem",
+            flexWrap: "wrap",
+          }}
+        >
           <p
-            className="text-[#FAF7F2]/25 text-[13px] italic"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontStyle: "italic",
+              fontSize: "0.875rem",
+              color: "rgba(253,250,246,0.2)",
+            }}
           >
             don&apos;t miss this saturday
           </p>
-          <p className="text-[#FAF7F2]/20 text-xs tracking-wide">
+          <p
+            style={{
+              fontSize: "0.75rem",
+              color: "rgba(253,250,246,0.15)",
+              letterSpacing: "0.04em",
+            }}
+          >
             © {new Date().getFullYear()} · Made with warmth in Bangkok
           </p>
         </div>
-
       </div>
     </section>
   );
 }
 
-/* ─── Page root ───────────────────────────────────────────────── */
+/* ─── Page root ─────────────────────────────────────────────────── */
 export default function Home() {
   return (
     <>
